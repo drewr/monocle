@@ -12,7 +12,8 @@
     :default "stdout"]
    ["-f" "--file" "File to monitor for content"]
    ["-o" "--offset-file" "File with offset information"]
-   ["-b" "--batch" "Size of batches from FILE" :default 25]])
+   ["-b" "--batch" "Size of batches from FILE"
+    :default 25 :parse-fn #(Integer. %)]])
 
 (defn amqp-opts [iface]
   (.split iface "\\|"))
