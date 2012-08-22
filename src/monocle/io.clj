@@ -42,7 +42,7 @@
           (for [b (interpose ["-- "]
                              (partition-all batch (line-seq reader)))
                 l b]
-            (.println ptr l)))))
+            (.println (-> ptr java.io.PrintWriter.) l)))))
 
 (defn write-stdout [reader batch]
   (write-printer *out* reader batch))
