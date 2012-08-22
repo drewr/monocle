@@ -13,6 +13,11 @@
     (mq/with-channel
       (mq/exchange-delete exch))))
 
+(defn delete-queue [uri exch queue]
+  (mq/with-broker {:uri uri}
+    (mq/with-channel
+      (mq/queue-delete queue))))
+
 (defn write-rabbitmq [[uri exch key] reader batch]
   (mq/with-broker {:uri uri}
     (mq/with-channel
