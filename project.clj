@@ -1,4 +1,4 @@
-(defproject com.draines/monocle "0.9.9"
+(defproject com.draines/monocle "0.9.10"
   :description "Monocle"
   :url "http://github.com/drewr/monocle"
   :license {:name "Eclipse Public License"
