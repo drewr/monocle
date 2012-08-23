@@ -1,6 +1,7 @@
 VER = $(shell lein pprint :version)
 
 package:	
+	lein clean
 	lein uberjar
 	rm -rf pkg/lib 2>/dev/null
 	mkdir -p pkg/lib
