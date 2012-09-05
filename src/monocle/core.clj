@@ -8,12 +8,15 @@
 
 (def options
   [["-i" "--interface"
-    "Where to send output (stdout, stderr, amqp://HOST:PORT/VHOST|EXCH|KEY)"
+    (str "Where to send output (stdout,\n"
+         "                                "
+         " stderr, amqp://HOST:PORT/VHOST|EXCH|KEY)")
     :default "stdout"]
    ["-f" "--file" "File to monitor for content"]
    ["-o" "--offset-file" "File with offset information"]
    ["-b" "--batch" "Size of batches from FILE"
-    :default 25 :parse-fn #(Integer. %)]])
+    :default 25 :parse-fn #(Integer. %)]
+   ["-h" "--help" "Help!" :default false :flag true]])
 
 (defn amqp-opts [iface]
   (.split iface "\\|"))
@@ -42,12 +45,17 @@
                     (- c2 c))
         (set-new-offset! c2)))))
 
+(defn delete-trailing-whitespace [s]
+  (.replaceAll s "[ ]+\n" "\n"))
+
 (defn -main [& args]
-  (let [[{:keys [interface file offset-file batch] :as opts} args help]
+  (let [[{:keys [interface file offset-file batch help_] :as opts} args help]
         (apply cli/cli args options)]
     (when-not offset-file
       (log/fatalf "-o not supplied" offset-file))
     (when-not file
       (log/fatalf "-f not supplied" file))
+    (when help_
+      (println (delete-trailing-whitespace help)))
     (when (and offset-file file)
       (main opts))))
