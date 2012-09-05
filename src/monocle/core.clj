@@ -49,13 +49,13 @@
   (.replaceAll s "[ ]+\n" "\n"))
 
 (defn -main [& args]
-  (let [[{:keys [interface file offset-file batch help_] :as opts} args help]
+  (let [[{:keys [interface file offset-file batch help] :as opts} args helpstr]
         (apply cli/cli args options)]
     (when-not offset-file
       (log/fatalf "-o not supplied" offset-file))
     (when-not file
       (log/fatalf "-f not supplied" file))
-    (when help_
-      (println (delete-trailing-whitespace help)))
+    (when help
+      (println (delete-trailing-whitespace helpstr)))
     (when (and offset-file file)
       (main opts))))
