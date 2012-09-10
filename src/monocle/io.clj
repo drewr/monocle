@@ -36,16 +36,16 @@
          (.release lock#)
          (.close raf#)))))
 
-(defn write-printer [ptr reader batch]
+(defn write-printer [pfn reader batch]
   (count
    (apply concat
           (for [b (interpose ["-- "]
                              (partition-all batch (line-seq reader)))
                 l b]
-            (.println (-> ptr java.io.PrintWriter.) l)))))
+            (pfn l)))))
 
 (defn write-stdout [reader batch]
-  (write-printer *out* reader batch))
+  (write-printer println reader batch))
 
 (defn write-stderr [reader batch]
-  (write-printer *err* reader batch))
+  (write-printer #(binding [*out* *err*] (println %)) reader batch))
