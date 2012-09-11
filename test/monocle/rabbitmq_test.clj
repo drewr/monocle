@@ -10,17 +10,19 @@
 
 (def queue "test.foo")
 
-(def key "foo")
+(def _key "foo")
 
-(use-fixtures :each (fn [t]
-                      (bind-queue uri exch queue key)
-                      (t)
-                      (delete-queue uri exch queue)
-                      (delete-exchange uri exch)))
+(defmacro with-rabbit [body]
+  `(do
+     (bind-queue uri ~exch ~queue ~_key)
+     ~body
+     (delete-queue ~uri ~exch ~queue)
+     (delete-exchange ~uri ~exch))  )
 
 (deftest ^{:integration true}
   t-publish
   (testing "make sure we have a connection"
-    (is (= 2 (write-rabbitmq [uri exch key]
-                             (io/reader
-                              (StringReader. "foo\nbar")) 1)))))
+    (with-rabbit
+      (is (= 2 (write-rabbitmq [uri exch _key]
+                               (io/reader
+                                (StringReader. "foo\nbar")) 1))))))
