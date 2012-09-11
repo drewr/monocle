@@ -16,6 +16,7 @@
    ["-o" "--offset-file" "File with offset information"]
    ["-b" "--batch" "Size of batches from FILE"
     :default 25 :parse-fn #(Integer. %)]
+   ["-r" "--reset" "Don't write a new offset" :default false :flag true]
    ["-h" "--help" "Help!" :default false :flag true]])
 
 (defn amqp-opts [iface]
@@ -33,7 +34,7 @@
 (defn send-iface [iface reader batch]
   ((whichfn iface) reader batch))
 
-(defn main [{:keys [file offset-file interface batch]}]
+(defn main [{:keys [file offset-file interface batch reset]}]
   (with-offset [offset offset-file set-new-offset!]
     (let [[stream reader] (io/counting-stream-reader file offset)
           c (.getCount stream)
@@ -43,7 +44,8 @@
         (log/debugf "read %d lines %d bytes"
                     (or linecount 0)
                     (- c2 c))
-        (set-new-offset! c2)))))
+        (when-not reset
+          (set-new-offset! c2))))))
 
 (defn delete-trailing-whitespace [s]
   (.replaceAll s "[ ]+\n" "\n"))
