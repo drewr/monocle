@@ -1,4 +1,7 @@
 (ns monocle.rabbitmq
+  (:require [langohr.core :refer [connect create-channel]]
+            [langohr.exchange :as lexch]
+            [langohr.basic :as l])
   (:require [com.mefesto.wabbitmq :as mq]))
 
 (defn bind-queue [uri exch queue key]
@@ -19,10 +22,15 @@
       (mq/queue-delete queue))))
 
 (defn write-rabbitmq [[uri exch key] reader batch]
-  (mq/with-broker {:uri uri}
-    (mq/with-channel
-      (mq/with-exchange {:name exch}
-        (count
-         (for [b (partition-all batch (line-seq reader))]
-           (let [payload (str (apply str (interpose "\n" b)) "\n")]
-             (mq/publish key (.getBytes payload)))))))))
+  (let [conn (connect {:uri uri
+                       :connection-timeout 3000})
+        chan (create-channel conn)]
+    (count
+     (for [b (partition-all batch (line-seq reader))]
+       (let [payload (str (apply str (interpose "\n" b)) "\n")]
+         (l/publish chan exch key (.getBytes payload)))))))
+
+(defn get-rabbitmq [[uri exch queue]]
+  (let [conn (connect {:uri uri})
+        chan (create-channel conn)]
+    (String. (.getBody (l/get chan queue)) "utf-8")))

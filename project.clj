@@ -8,7 +8,7 @@
                  [org.clojure/tools.logging "0.2.3"]
                  [log4j/log4j "1.2.17"]
                  [commons-io "2.4"]
-                 [com.mefesto/wabbitmq "0.2.2"]
+                 [com.novemberain/langohr "1.0.0-beta4"]
                  [cheshire "4.0.1"]]
   :main monocle.core
   :test-selectors {:default  #(not (:integration %))

@@ -12,10 +12,10 @@
 
 (def _key "foo")
 
-(defmacro with-rabbit [body]
+(defmacro with-rabbit [& body]
   `(do
      (bind-queue uri ~exch ~queue ~_key)
-     ~body
+     ~@body
      (delete-queue ~uri ~exch ~queue)
      (delete-exchange ~uri ~exch))  )
 
@@ -25,4 +25,5 @@
     (with-rabbit
       (is (= 2 (write-rabbitmq [uri exch _key]
                                (io/reader
-                                (StringReader. "foo\nbar")) 1))))))
+                                (StringReader. "foo\nbar")) 1)))
+      (is (= "foo\n" (get-rabbitmq [uri exch queue]))))))
