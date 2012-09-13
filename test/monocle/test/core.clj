@@ -4,7 +4,7 @@
   (:require [clojure.java.io :as io])
   (:import (java.io File)))
 
-(def ^:dynamic tmp nil)
+(def tmp nil)
 
 (use-fixtures :each
   (fn [t]
