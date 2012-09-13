@@ -12,18 +12,18 @@
 
 (def _key "foo")
 
-(defmacro with-rabbit [& body]
-  `(do
-     (bind-queue uri ~exch ~queue ~_key)
+(defmacro with-rabbit [[ch cfg] & body]
+  `(let [~ch (connect ~cfg)]
+     (bind-queue ~ch ~exch ~queue ~_key)
      ~@body
-     (delete-queue ~uri ~exch ~queue)
-     (delete-exchange ~uri ~exch))  )
+     (delete-queue ~ch ~exch ~queue)
+     (delete-exchange ~ch ~exch)))
 
 (deftest ^{:integration true}
   t-publish
   (testing "make sure we have a connection"
-    (with-rabbit
-      (is (= 2 (write-rabbitmq [uri exch _key]
+    (with-rabbit [chan {:uri uri}]
+      (is (= 2 (write-rabbitmq [chan exch _key]
                                (io/reader
                                 (StringReader. "foo\nbar")) 1)))
-      (is (= "foo\n" (get-rabbitmq [uri exch queue]))))))
+      (is (= "foo\n" (get-rabbitmq [chan exch queue]))))))
