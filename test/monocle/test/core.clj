@@ -1,4 +1,4 @@
-(ns monocle.core-test
+(ns monocle.test.core
   (:use clojure.test)
   (:use monocle.core :reload-all)
   (:require [clojure.java.io :as io])

@@ -1,4 +1,4 @@
-(ns monocle.rabbitmq-test
+(ns monocle.test.rabbitmq
   (:use clojure.test)
   (:require [clojure.java.io :as io])
   (:use monocle.rabbitmq :reload)
