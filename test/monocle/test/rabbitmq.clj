@@ -12,8 +12,8 @@
 
 (def _key "foo")
 
-(defmacro with-rabbit [[ch cfg] & body]
-  `(let [~ch (connect ~cfg)]
+(defmacro with-test-rabbit [[ch cfg] & body]
+  `(with-rabbit [~ch ~cfg]
      (bind-queue ~ch ~exch ~queue ~_key)
      ~@body
      (delete-queue ~ch ~exch ~queue)
@@ -22,8 +22,8 @@
 (deftest ^{:integration true}
   t-publish
   (testing "make sure we have a connection"
-    (with-rabbit [chan {:uri uri}]
-      (is (= 2 (write-rabbitmq [chan exch _key]
-                               (io/reader
-                                (StringReader. "foo\nbar")) 1)))
+    (with-test-rabbit [chan {:uri uri}]
+      (is (= 2 (write-chan [chan exch _key]
+                       (io/reader
+                        (StringReader. "foo\nbar")) 1)))
       (is (= "foo\n" (get-rabbitmq [chan exch queue]))))))
