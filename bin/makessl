@@ -1,0 +1,90 @@
+#!/bin/sh
+
+COMPANY=${1:-Initech}
+PASS=${2:-michaelbolton}
+SERIAL=`date +%Y%m%d%H%M%S`
+
+mkdir -p test/ssl/testca/certs
+mkdir -p test/ssl/testca/private
+chmod 700 test/ssl/testca/private
+echo $SERIAL >test/ssl/testca/serial
+touch test/ssl/testca/index.txt
+
+cat <<EOF >test/ssl/testca/openssl.cnf
+[ ca ]                                                     
+default_ca = testca                                        
+
+[ testca ]                                                 
+dir = .                                                    
+certificate = \$dir/cacert.pem                              
+database = \$dir/index.txt                                  
+new_certs_dir = \$dir/certs                                 
+private_key = \$dir/private/cakey.pem                       
+serial = \$dir/serial                                       
+
+default_crl_days = 7                                       
+default_days = 365                                         
+default_md = sha1                                          
+
+policy = testca_policy                                     
+x509_extensions = certificate_extensions                   
+
+[ testca_policy ]                                          
+commonName = supplied                                      
+stateOrProvinceName = optional                             
+countryName = optional                                     
+emailAddress = optional                                    
+organizationName = optional                                
+organizationalUnitName = optional                          
+
+[ certificate_extensions ]                                 
+basicConstraints = CA:false                                
+
+[ req ]                                                    
+default_bits = 2048                                        
+default_keyfile = ./private/cakey.pem                      
+default_md = sha1                                          
+prompt = yes                                               
+distinguished_name = root_ca_distinguished_name            
+x509_extensions = root_ca_extensions                       
+
+[ root_ca_distinguished_name ]                             
+commonName = hostname                                      
+
+[ root_ca_extensions ]                                     
+basicConstraints = CA:true                                 
+keyUsage = keyCertSign, cRLSign                            
+
+[ client_ca_extensions ]                                   
+basicConstraints = CA:false                                
+keyUsage = digitalSignature                                
+extendedKeyUsage = 1.3.6.1.5.5.7.3.2                       
+
+[ server_ca_extensions ]                                   
+basicConstraints = CA:false                                
+keyUsage = keyEncipherment                                 
+extendedKeyUsage = 1.3.6.1.5.5.7.3.1
+EOF
+
+( cd test/ssl/testca
+  openssl req -x509 \
+    -config openssl.cnf -newkey rsa:2048 -days 3650 \
+    -out cacert.pem -outform PEM -subj /CN=$COMPANY/ -nodes
+  openssl x509 -in cacert.pem -out cacert.cer -outform DER )
+
+create() {
+  mkdir -p test/ssl/$1
+  ( cd test/ssl/$1
+    openssl genrsa -out key.pem 2048
+    openssl req -new -key key.pem -out req.pem -outform PEM \
+      -subj /CN=`hostname`-${SERIAL}/O=$1/ -nodes
+    cd ../testca
+    openssl ca -config openssl.cnf -in ../$1/req.pem -out \
+      ../$1/cert.pem -notext -batch -extensions $1_ca_extensions
+    cd ../$1
+    openssl pkcs12 -export -out keycert.p12 \
+      -in cert.pem -inkey key.pem -passout pass:$2 )
+}
+
+create server $PASS
+create client $PASS

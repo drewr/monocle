@@ -10,3 +10,4 @@ pom.xml
 .lein-plugins
 /tmp
 /*.tar.gz
+/test/ssl
