@@ -44,8 +44,8 @@
                 l b]
             (pfn l)))))
 
-(defn write-stdout [reader batch]
+(defn write-stdout [reader batch _]
   (write-printer println reader batch))
 
-(defn write-stderr [reader batch]
+(defn write-stderr [reader batch _]
   (write-printer #(binding [*out* *err*] (println %)) reader batch))

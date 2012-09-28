@@ -1,4 +1,4 @@
-(defproject com.draines/monocle "0.9.15"
+(defproject com.draines/monocle "0.9.16-SNAPSHOT"
   :description "Monocle"
   :url "http://github.com/drewr/monocle"
   :license {:name "Eclipse Public License"
@@ -8,8 +8,9 @@
                  [org.clojure/tools.logging "0.2.3"]
                  [log4j/log4j "1.2.17"]
                  [commons-io "2.4"]
-                 [com.novemberain/langohr "1.0.0-beta4"]
+                 [com.rabbitmq/amqp-client "2.8.6"]
                  [cheshire "4.0.1"]]
+  :jvm-opts [#_"-Djavax.net.debug=ssl:handshake"]
   :main monocle.core
   :test-selectors {:default  #(not (:integration %))
                    :integration :integration

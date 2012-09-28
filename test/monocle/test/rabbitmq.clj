@@ -4,7 +4,9 @@
   (:use monocle.rabbitmq :reload)
   (:import (java.io StringReader)))
 
-(def uri "amqp://localhost/test")
+(def uri "amqp://localhost")
+
+(def ssluri "amqps://localhost")
 
 (def exch "test.exchange")
 
@@ -20,10 +22,21 @@
      (delete-exchange ~ch ~exch)))
 
 (deftest ^{:integration true}
-  t-publish
-  (testing "make sure we have a connection"
-    (with-test-rabbit [chan {:uri uri}]
-      (is (= 2 (write-chan [chan exch _key]
-                       (io/reader
-                        (StringReader. "foo\nbar")) 1)))
-      (is (= "foo\n" (get-rabbitmq [chan exch queue]))))))
+  t-publish-clear
+  (with-test-rabbit [chan {:uri uri}]
+    (is (= 2 (write-chan [chan exch _key]
+                         (io/reader
+                          (StringReader. "foo\nbar")) 1)))
+    (is (= "foo\n" (get-rabbitmq [chan exch queue])))))
+
+(deftest ^{:integration true}
+  t-publish-ssl
+  (with-test-rabbit [chan {:uri ssluri
+                           :ssl {:client "test/ssl/client.jks"
+                                 :clientpw "michaelbolton"
+                                 :trust "test/ssl/trust.jks"
+                                 :trustpw "michaelbolton"}}]
+    (is (= 2 (write-chan [chan exch _key]
+                         (io/reader
+                          (StringReader. "foo\nbar")) 1)))
+    (is (= "foo\n" (get-rabbitmq [chan exch queue])))))

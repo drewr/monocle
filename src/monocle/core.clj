@@ -10,13 +10,17 @@
   [["-i" "--interface"
     (str "Where to send output (stdout,\n"
          "                                "
-         " stderr, amqp://HOST:PORT/VHOST|EXCH|KEY)")
+         " stderr, amqps?://HOST:PORT/VHOST|EXCH|KEY)")
     :default "stdout"]
    ["-f" "--file" "File to monitor for content"]
    ["-o" "--offset-file" "File with offset information"]
    ["-b" "--batch" "Size of batches from FILE"
     :default 25 :parse-fn #(Integer. %)]
    ["-r" "--reset" "Don't write a new offset" :default false :flag true]
+   ["--client" "Client keystore"]
+   ["--clientpw" "Client keystore password"]
+   ["--trust" "Trust keystore"]
+   ["--trustpw" "Trust keystore password"]
    ["-h" "--help" "Help!" :default false :flag true]])
 
 (defn amqp-opts [iface]
@@ -26,19 +30,19 @@
   (condp #(.startsWith %2 %1) iface
     "stdout" io/write-stdout
     "stderr" io/write-stderr
-    "amqp:" (partial rmq/write-rabbitmq (amqp-opts iface))
+    "amqp" (partial rmq/write-rabbitmq (amqp-opts iface))
     (throw
      (Exception.
       (format "invalid output interface: %s" iface)))))
 
-(defn send-iface [iface reader batch]
-  ((whichfn iface) reader batch))
+(defn send-iface [iface reader batch opts]
+  ((whichfn iface) reader batch opts))
 
-(defn main [{:keys [file offset-file interface batch reset]}]
+(defn main [{:keys [file offset-file interface batch reset] :as opts}]
   (with-offset [offset offset-file set-new-offset!]
     (let [[stream reader] (io/counting-stream-reader file offset)
           c (.getCount stream)
-          linecount (send-iface interface reader batch)]
+          linecount (send-iface interface reader batch opts)]
       (log/debugf "starting %s at %d" file c)
       (let [c2 (.getCount stream)]
         (log/debugf "read %d lines %d bytes"
@@ -52,7 +56,9 @@
 
 (defn -main [& args]
   (let [[{:keys [interface file offset-file batch help] :as opts} args helpstr]
-        (apply cli/cli args options)]
+        (apply cli/cli args options)
+        opts (assoc opts :ssl (select-keys opts [:client :clientpw
+                                                 :trust :trustpw]))]
     (when-not offset-file
       (log/fatalf "-o not supplied" offset-file))
     (when-not file
