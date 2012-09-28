@@ -99,3 +99,23 @@ keytool -importkeystore -v \
    -srcstorepass $PASS \
    -destkeystore test/ssl/client.jks \
    -deststorepass $PASS
+
+echo "*****************"
+echo "Put this in your /path/to/etc/rabbit/rabbit.config:"
+cat <<EOF
+-------
+
+[
+  {rabbit, [
+    {ssl_listeners, [{"127.0.0.1", 5671}]},
+    {ssl_options,
+     [{cacertfile,"`pwd`/test/ssl/testca/cacert.pem"},
+      {certfile,"`pwd`/test/ssl/server/cert.pem"},
+      {keyfile,"`pwd`/test/ssl/server/key.pem"},
+      {verify,verify_peer},
+      {fail_if_no_peer_cert,true}]}
+  ]}
+].
+
+-------
+EOF
