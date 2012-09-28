@@ -88,3 +88,14 @@ create() {
 
 create server $PASS
 create client $PASS
+
+keytool -import \
+   -alias $SERIAL -file test/ssl/server/cert.pem -keystore test/ssl/trust.jks \
+   -storepass $PASS -noprompt
+
+keytool -importkeystore -v \
+   -srckeystore test/ssl/client/keycert.p12 \
+   -srcstoretype pkcs12 \
+   -srcstorepass $PASS \
+   -destkeystore test/ssl/client.jks \
+   -deststorepass $PASS
