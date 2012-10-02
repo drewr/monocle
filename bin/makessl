@@ -2,6 +2,7 @@
 
 COMPANY=${1:-Initech}
 PASS=${2:-michaelbolton}
+HOSTNAME=${3:-beta}
 SERIAL=`date +%Y%m%d%H%M%S`
 
 mkdir -p test/ssl/testca/certs
@@ -77,17 +78,17 @@ create() {
   ( cd test/ssl/$1
     openssl genrsa -out key.pem 2048
     openssl req -new -key key.pem -out req.pem -outform PEM \
-      -subj /CN=`hostname`-${SERIAL}/O=$1/ -nodes
+      -subj /CN=$2/O=$1/ -nodes
     cd ../testca
     openssl ca -config openssl.cnf -in ../$1/req.pem -out \
       ../$1/cert.pem -notext -batch -extensions $1_ca_extensions
     cd ../$1
     openssl pkcs12 -export -out keycert.p12 \
-      -in cert.pem -inkey key.pem -passout pass:$2 )
+      -in cert.pem -inkey key.pem -passout pass:$3 )
 }
 
-create server $PASS
-create client $PASS
+create server $HOSTNAME $PASS
+create client $HOSTNAME $PASS
 
 keytool -import \
    -alias $SERIAL -file test/ssl/server/cert.pem -keystore test/ssl/trust.jks \
