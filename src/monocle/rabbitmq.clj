@@ -66,6 +66,7 @@
   (with-rabbit [chan (assoc {:uri uri
                              :timeout 5000}
                        :ssl (:ssl opts))]
+    (bind-queue chan exch key key)
     (write-chan [chan exch key] reader batch)))
 
 (defn get-rabbitmq [[chan exch queue]]
