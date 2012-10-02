@@ -8,11 +8,11 @@
 
 (def ssluri "amqps://localhost")
 
-(def exch "test.exchange")
+(def exch "test.direct")
 
 (def queue "test.foo")
 
-(def _key "foo")
+(def _key "test.foo")
 
 (defmacro with-test-rabbit [[ch cfg] & body]
   `(with-rabbit [~ch ~cfg]
