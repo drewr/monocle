@@ -59,7 +59,8 @@
    (for [b (partition-all batch (line-seq reader))]
      (let [payload (str (apply str (interpose "\n" b)) "\n")]
        (.basicPublish chan exch key
-                      (.build (AMQP$BasicProperties$Builder.)) (.getBytes payload))))))
+                      (.build (AMQP$BasicProperties$Builder.))
+                      (.getBytes payload))))))
 
 (defn write-rabbitmq [[uri exch key] reader batch opts]
   (with-rabbit [chan (assoc {:uri uri
