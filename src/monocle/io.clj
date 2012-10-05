@@ -36,16 +36,15 @@
          (.release lock#)
          (.close raf#)))))
 
-(defn write-printer [pfn lines batch]
+(defn write-printer [pfn batches]
   (count
    (apply concat
-          (for [b (interpose ["-- "]
-                             (partition-all batch lines))
+          (for [b (interpose ["-- "] batches)
                 l b]
             (pfn l)))))
 
-(defn write-stdout [lines batch _]
-  (write-printer println lines batch))
+(defn write-stdout [batches _]
+  (write-printer println batches))
 
-(defn write-stderr [lines batch _]
-  (write-printer #(binding [*out* *err*] (println %)) lines batch))
+(defn write-stderr [batches _]
+  (write-printer #(binding [*out* *err*] (println %)) batches))

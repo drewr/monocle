@@ -39,14 +39,17 @@
      (Exception.
       (format "invalid output interface: %s" iface)))))
 
-(defn send-iface [iface reader batch opts]
-  ((whichfn iface) reader batch opts))
+(defn send-iface [iface batches opts]
+  ((whichfn iface) batches opts))
+
+(defn part [rdr opts]
+  (partition-all (:batch opts) (line-seq rdr)))
 
 (defn main [{:keys [file offset-file interface batch reset] :as opts}]
   (with-offset [offset offset-file set-new-offset!]
     (let [[stream reader] (io/counting-stream-reader file offset)
           c (.getCount stream)
-          linecount (send-iface interface (line-seq reader) batch opts)]
+          linecount (send-iface interface (part reader opts) opts)]
       (log/debugf "starting %s at %d" file c)
       (let [c2 (.getCount stream)]
         (log/debugf "read %d lines %d bytes"
