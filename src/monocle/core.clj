@@ -21,6 +21,10 @@
    ["--clientpw" "Client keystore password"]
    ["--trust" "Trust keystore"]
    ["--trustpw" "Trust keystore password"]
+   ["--index" (str "Format the batches in elasticsearch's bulk\n"
+                   "                                "
+                   " format.  Also need --type.")
+    "--type " "The type to provide to elasticsearch"]
    ["-h" "--help" "Help!" :default false :flag true]])
 
 (defn amqp-opts [iface]
@@ -42,7 +46,7 @@
   (with-offset [offset offset-file set-new-offset!]
     (let [[stream reader] (io/counting-stream-reader file offset)
           c (.getCount stream)
-          linecount (send-iface interface reader batch opts)]
+          linecount (send-iface interface (line-seq reader) batch opts)]
       (log/debugf "starting %s at %d" file c)
       (let [c2 (.getCount stream)]
         (log/debugf "read %d lines %d bytes"

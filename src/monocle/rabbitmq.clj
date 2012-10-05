@@ -54,20 +54,20 @@
 (defn delete-queue [chan exch queue]
   (.queueDelete chan queue))
 
-(defn write-chan [[chan exch key] reader batch]
+(defn write-chan [[chan exch key] lines batch]
   (count
-   (for [b (partition-all batch (line-seq reader))]
+   (for [b (partition-all batch lines)]
      (let [payload (str (apply str (interpose "\n" b)) "\n")]
        (.basicPublish chan exch key
                       (.build (AMQP$BasicProperties$Builder.))
                       (.getBytes payload))))))
 
-(defn write-rabbitmq [[uri exch key] reader batch opts]
+(defn write-rabbitmq [[uri exch key] lines batch opts]
   (with-rabbit [chan (assoc {:uri uri
                              :timeout 5000}
                        :ssl (:ssl opts))]
     (bind-queue chan exch key key)
-    (write-chan [chan exch key] reader batch)))
+    (write-chan [chan exch key] lines batch)))
 
 (defn get-rabbitmq [[chan exch queue]]
   (String. (.getBody (.basicGet chan queue true)) "utf-8"))
