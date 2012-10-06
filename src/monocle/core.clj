@@ -2,6 +2,7 @@
   (:gen-class)
   (:require [clojure.tools.cli :as cli]
             [clojure.tools.logging :as log]
+            [cheshire.core :as json]
             [monocle.io :as io]
             [monocle.rabbitmq :as rmq])
   (:use [monocle.io :only [with-offset]]))
@@ -23,8 +24,8 @@
    ["--trustpw" "Trust keystore password"]
    ["--index" (str "Format the batches in elasticsearch's bulk\n"
                    "                                "
-                   " format.  Also need --type.")
-    "--type " "The type to provide to elasticsearch"]
+                   " format.  Also need --type.")]
+   ["--type" "The type to provide to elasticsearch"]
    ["-h" "--help" "Help!" :default false :flag true]])
 
 (defn amqp-opts [iface]
@@ -42,8 +43,12 @@
 (defn send-iface [iface batches opts]
   ((whichfn iface) batches opts))
 
-(defn part [rdr opts]
-  (partition-all (:batch opts) (line-seq rdr)))
+(defn part [rdr {:keys [batch index type]}]
+  (if (and index type)
+    (let [bulk-header (json/encode {:index {:_index index :_type type}})]
+      (partition-all (* batch 2) (interleave (repeat bulk-header)
+                                             (line-seq rdr))))
+    (partition-all batch (line-seq rdr))))
 
 (defn main [{:keys [file offset-file interface batch reset] :as opts}]
   (with-offset [offset offset-file set-new-offset!]
@@ -61,16 +66,31 @@
 (defn delete-trailing-whitespace [s]
   (.replaceAll s "[ ]+\n" "\n"))
 
+(defn mixmatch [& args]
+  (= 2 (count (set (map boolean args)))))
+
+(defn exit [cont msg]
+  (println msg)
+  (reset! cont false))
+
+(defn fail [cont err]
+  (log/fatalf err)
+  (reset! cont false))
+
 (defn -main [& args]
-  (let [[{:keys [interface file offset-file batch help] :as opts} args helpstr]
+  (let [[{:keys [interface file offset-file
+                 batch help index type] :as opts} args helpstr]
         (apply cli/cli args options)
         opts (assoc opts :ssl (select-keys opts [:client :clientpw
-                                                 :trust :trustpw]))]
+                                                 :trust :trustpw]))
+        continue? (atom true)]
     (when-not offset-file
-      (log/fatalf "-o not supplied" offset-file))
+      (fail continue? "-o not supplied"))
     (when-not file
-      (log/fatalf "-f not supplied" file))
+      (fail continue? "-f not supplied"))
+    (when (mixmatch index type)
+      (fail continue? "supply both --index and --type if you want ES bulk"))
     (when help
-      (println (delete-trailing-whitespace helpstr)))
-    (when (and offset-file file)
+      (exit continue? (delete-trailing-whitespace helpstr)))
+    (when @continue?
       (main opts))))
