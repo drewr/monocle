@@ -1,0 +1,5 @@
+{"_id":"unique1","_index":"test1","foo":"1"}
+{"_id":"unique2","_index":"test2","foo":"2"}
+{"_id":"unique3","_index":"test3","foo":"3"}
+{"_index":"test4","foo":"4"}
+{"_id":"unique5","foo":"5"}

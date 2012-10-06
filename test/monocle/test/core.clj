@@ -51,3 +51,17 @@
                        :reset false}))]
       (is (not (.startsWith out "{\"time")))
       (is (= 0 (count (re-seq #"-- \n" out)))))))
+
+(deftest bulk
+  (testing "should add bulk format"
+    (let [out (with-out-str
+                (main {:file (.getPath (io/resource "bulk.txt"))
+                       :offset-file (str tmp)
+                       :interface "stdout"
+                       :batch 1
+                       :reset false
+                       :index "foo"
+                       :type "t"}))
+          ans (slurp (io/resource "bulk-answer.txt"))]
+      (is (= out ans))
+      (is (= 2 (count (re-seq #"-- \n" out)))))))

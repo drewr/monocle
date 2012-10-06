@@ -1,0 +1,12 @@
+{"index":{"_id":"unique1","_index":"test1","_type":"t"}}
+{"foo":"1"}
+{"index":{"_id":"unique2","_index":"test2","_type":"t"}}
+{"foo":"2"}
+-- 
+{"index":{"_id":"unique3","_index":"test3","_type":"t"}}
+{"foo":"3"}
+{"index":{"_index":"test4","_type":"t"}}
+{"foo":"4"}
+-- 
+{"index":{"_id":"unique5","_index":"foo","_type":"t"}}
+{"foo":"5"}

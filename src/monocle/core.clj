@@ -5,7 +5,8 @@
             [cheshire.core :as json]
             [monocle.io :as io]
             [monocle.rabbitmq :as rmq])
-  (:use [monocle.io :only [with-offset]]))
+  (:use [monocle.io :only [with-offset]])
+  (:import [com.fasterxml.jackson.core JsonParseException]))
 
 (def options
   [["-i" "--interface"
@@ -43,11 +44,26 @@
 (defn send-iface [iface batches opts]
   ((whichfn iface) batches opts))
 
+(defn decode-safe [str]
+  (try
+    (json/decode str)
+    (catch JsonParseException e
+      str)))
+
+(defn add-header [index type x]
+  (let [ks ["_index" "_type" "_id"]
+        doc (decode-safe x)
+        meta {:index (merge {"_index" index "_type" type}
+                            (if (map? doc) (select-keys doc ks) {}))}
+        doc (if (map? doc) (apply dissoc doc ks) doc)]
+    (format "%s\n%s"
+            (json/encode meta)
+            (if (map? doc) (json/encode doc) doc))))
+
 (defn part [rdr {:keys [batch index type]}]
   (if (and index type)
-    (let [bulk-header (json/encode {:index {:_index index :_type type}})]
-      (partition-all (* batch 2) (interleave (repeat bulk-header)
-                                             (line-seq rdr))))
+    (partition-all (* batch 2) (map (partial add-header index type)
+                                    (line-seq rdr)))
     (partition-all batch (line-seq rdr))))
 
 (defn main [{:keys [file offset-file interface batch reset] :as opts}]
