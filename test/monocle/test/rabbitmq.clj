@@ -24,12 +24,21 @@
 
 (deftest ^{:integration true}
   t-publish-clear
-  (with-test-rabbit [chan {:uri uri}]
-    (is (= 2 (write-chan [chan exch _key]
-                         (line-seq
-                          (io/reader
-                           (StringReader. "foo\nbar"))) 1)))
-    (is (= "foo\n" (get-rabbitmq [chan exch queue])))))
+  (testing "main interface"
+    (write-rabbitmq [uri exch queue]
+                    (partition-all
+                     1 (line-seq
+                        (io/reader
+                         (StringReader. "foo\nbar"))))
+                    {}))
+  (testing "lower level interface"
+    (with-test-rabbit [chan {:uri uri}]
+      (is (= 2 (write-chan [chan exch _key]
+                           (partition-all
+                            1 (line-seq
+                               (io/reader
+                                (StringReader. "foo\nbar")))))))
+      (is (= "foo\n" (get-rabbitmq [chan exch queue]))))))
 
 (deftest ^{:integration true}
   t-publish-ssl
@@ -39,9 +48,11 @@
                                  :trust "test/ssl/trust.jks"
                                  :trustpw "michaelbolton"}}]
     (is (= 2 (write-chan [chan exch _key]
-                         (line-seq
-                          (io/reader
-                           (StringReader. "foo\nbar"))) 1)))
+                         (partition-all
+                          1
+                          (line-seq
+                           (io/reader
+                            (StringReader. "foo\nbar")))))))
     (is (= "foo\n" (get-rabbitmq [chan exch queue])))))
 
 (deftest ^{:integration true}
