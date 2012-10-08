@@ -27,6 +27,7 @@
                    "                                "
                    " format.  Also need --type.")]
    ["--type" "The type to provide to elasticsearch"]
+   ["--flush-queue" "Empty queue and exit" :default false :flag true]
    ["-h" "--help" "Help!" :default false :flag true]])
 
 (defn amqp-opts [iface]
@@ -100,6 +101,12 @@
         opts (assoc opts :ssl (select-keys opts [:client :clientpw
                                                  :trust :trustpw]))
         continue? (atom true)]
+    (when (:flush-queue opts)
+      (if (.startsWith (:interface opts) "amq")
+        (do
+          (rmq/flush-rabbitmq (amqp-opts (:interface opts)) opts)
+          (System/exit 0))
+        (fail continue? "interface doesn't support amqp")))
     (when-not offset-file
       (fail continue? "-o not supplied"))
     (when-not file

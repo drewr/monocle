@@ -2,7 +2,8 @@
   (:use clojure.test)
   (:require [clojure.java.io :as io])
   (:use monocle.rabbitmq :reload)
-  (:import (java.io StringReader)))
+  (:import (java.io StringReader)
+           (com.rabbitmq.client AMQP$Queue$BindOk)))
 
 (def uri "amqp://localhost")
 
@@ -42,3 +43,9 @@
                           (io/reader
                            (StringReader. "foo\nbar"))) 1)))
     (is (= "foo\n" (get-rabbitmq [chan exch queue])))))
+
+(deftest ^{:integration true}
+  t-flush-queue
+  (with-test-rabbit [chan {:uri uri}]
+    (is (instance? AMQP$Queue$BindOk (flush-queue chan exch queue)))
+    (is (nil? (get-rabbitmq [chan exch queue])))))

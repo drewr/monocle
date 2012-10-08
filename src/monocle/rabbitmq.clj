@@ -70,4 +70,18 @@
     (write-chan [chan exch key] lines batch)))
 
 (defn get-rabbitmq [[chan exch queue]]
-  (String. (.getBody (.basicGet chan queue true)) "utf-8"))
+  (try
+    (when-let [g (.basicGet chan queue true)]
+      (String. (.getBody g) "utf-8"))
+    (catch Exception _)))
+
+(defn flush-queue [chan exch queue]
+  (try
+    (delete-queue chan exch queue)
+    (bind-queue chan exch queue queue)
+    (catch Exception _)))
+
+(defn flush-rabbitmq [[uri exch queue] opts]
+  (with-rabbit [chan (assoc {:uri uri}
+                       :ssl (:ssl opts))]
+    (flush-queue chan exch queue)))
