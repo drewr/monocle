@@ -1,17 +1,25 @@
 (ns monocle.io
   (:require [clojure.java.io :as io])
-  (:import (java.io RandomAccessFile)
+  (:import (java.io File RandomAccessFile)
            (org.apache.commons.io.input CountingInputStream)))
 
+(defn raf [f]
+  (if (or (instance? File f)
+          (string? f))
+    (RandomAccessFile. f "rw")
+    f))
+
 (defn slurp-offset [f]
-  (try
-    (.readLong f)
-    (catch Exception _
-      0)))
+  (let [f (raf f)]
+    (try
+      (.readLong f)
+      (catch Exception _
+        0))))
 
 (defn spit-offset [f n]
-  (.seek f 0)
-  (.writeLong f n))
+  (let [f (raf f)]
+    (.seek f 0)
+    (.writeLong f n)))
 
 (defn counting-stream-reader
   ([file]
@@ -26,7 +34,7 @@
   "This is only intended for use across JVMs!  Provides no protection
   against other threads."
   [bindings & body]
-  `(let [raf# (RandomAccessFile. ~(second bindings) "rw")
+  `(let [raf# (raf ~(second bindings))
          lock# (-> raf# .getChannel .lock)
          ~(first bindings) (slurp-offset raf#)
          ~(last bindings) (fn [n#] (spit-offset raf# n#))]
