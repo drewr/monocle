@@ -27,7 +27,8 @@
   ([file offset]
      (let [f (io/file file)
            cis (CountingInputStream. (io/input-stream f))]
-       (.skip cis offset)
+       (when (<= offset (.length f))
+         (.skip cis offset))
        [cis (io/reader cis)])))
 
 (defmacro with-offset
